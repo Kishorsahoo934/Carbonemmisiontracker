@@ -1,0 +1,229 @@
+{% extends 'emissions/base.html' %}
+{% load emission_tags %}
+
+{% block content %}
+<style>
+    
+    body {
+        background: linear-gradient(135deg, #1e3c72, #2a5298);
+        color: #f8f9fa;
+        font-family: 'Poppins', sans-serif;
+    }
+
+   
+    .card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    
+    .btn {
+        border-radius: 30px;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .btn:hover {
+        transform: scale(1.05);
+    }
+
+    .btn-primary {
+        background-color: #00bcd4;
+        border: none;
+        color: white;
+    }
+
+    .btn-outline-primary {
+        border-color: #00bcd4;
+        color: #00bcd4;
+    }
+
+    .btn-outline-primary:hover {
+        background-color: #00bcd4;
+        color: white;
+    }
+
+    .btn-outline-success {
+        border-color: #28a745;
+        color: #28a745;
+    }
+
+    .btn-outline-success:hover {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .btn-outline-info {
+        border-color: #17a2b8;
+        color: #17a2b8;
+    }
+
+    .btn-outline-info:hover {
+        background-color: #17a2b8;
+        color: white;
+    }
+
+    /* Table Styling */
+    .table thead th {
+        background-color: rgba(0, 188, 212, 0.7);
+        color: white;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Status Badge Animations */
+    .bg-warning {
+        background-color: #ff9800 !important;
+        animation: shake 0.5s infinite alternate;
+    }
+
+    .bg-success {
+        background-color: #4caf50 !important;
+        animation: glow 1.5s infinite alternate;
+    }
+
+    @keyframes shake {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(5px); }
+    }
+
+    @keyframes glow {
+        0% { box-shadow: 0 0 5px #4caf50; }
+        100% { box-shadow: 0 0 15px #4caf50; }
+    }
+</style>
+
+{% if not organization %}
+<div class="alert alert-info text-center">
+    <h4>Welcome to Carbon Emissions Tracker!</h4>
+    <p>To get started, you need to create an organization.</p>
+    <a href="{% url 'emissions:create_organization' %}" class="btn btn-primary">Create Organization</a>
+</div>
+{% else %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card p-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">🌍 Organization Details</h5>
+                    <a href="{% url 'emissions:edit_organization' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                </div>
+                <p class="card-text">
+                    <strong>Name:</strong> {{ organization.name }}<br>
+                    <strong>Industry:</strong> {{ organization.industry }}
+                </p>
+                <div class="mt-3">
+                    <h6>⚡ Emission Limits:</h6>
+                    <ul class="list-unstyled">
+                        <li>
+                            <i class="fas fa-calendar-day text-primary"></i> Daily: 
+                            {{ organization.daily_emission_limit|floatformat:2 }} CO2e
+                        </li>
+                        <li>
+                            <i class="fas fa-calendar-week text-primary"></i> Monthly: 
+                            {{ organization.monthly_emission_limit|floatformat:2 }} CO2e
+                        </li>
+                        <li>
+                            <i class="fas fa-calendar text-primary"></i> Annual: 
+                            {{ organization.annual_emission_limit|floatformat:2 }} CO2e
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-3">
+            <div class="card-body">
+                <h5 class="card-title">🔥 Total Emissions</h5>
+                <p class="card-text display-4">{{ total_emissions|floatformat:2 }} CO2e</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card p-3">
+            <div class="card-body">
+                <h5 class="card-title">🚀 Quick Actions</h5>
+                <div class="btn-group">
+                    <a href="{% url 'emissions:create_source' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus-circle"></i> Add New Source
+                    </a>
+                    <a href="{% url 'emissions:add_record' %}" class="btn btn-outline-success">
+                        <i class="fas fa-chart-line"></i> Record Emission
+                    </a>
+                    <a href="{% url 'emissions:generate_report' %}" class="btn btn-outline-info">
+                        <i class="fas fa-file-export"></i> Generate Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card p-3">
+            <div class="card-body">
+                <h5 class="card-title">📊 Recent Records</h5>
+                {% if recent_records %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Source</th>
+                                <th>Quantity</th>
+                                <th>CO2e</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in recent_records %}
+                            <tr>
+                                <td>{{ record.date }}</td>
+                                <td>{{ record.emission_source.name }}</td>
+                                <td>{{ record.quantity }} {{ record.emission_source.unit }}</td>
+                                <td>{{ record.total_emissions|floatformat:2 }}</td>
+                                <td>
+                                    {% with alerts=organization|check_limits:record.date %}
+                                        {% if alerts %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-exclamation-triangle"></i> Limit Exceeded
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> Within Limits
+                                            </span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted" style="color:rgb(255, 0, 4); font-weight: bold;">
+                    No emission records yet. Start by adding some records!
+                </p>                
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
